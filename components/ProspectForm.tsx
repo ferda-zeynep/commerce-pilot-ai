@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import type { DemoPayloadSchema } from "@/types/demo";
 
 interface ProspectFormProps {
-  onGenerate: (data: DemoPayloadSchema) => void;
+  onGenerate: (formData: any) => void;
   isLoading: boolean;
 }
 
@@ -12,236 +11,197 @@ export default function ProspectForm({
   onGenerate,
   isLoading,
 }: ProspectFormProps) {
-  const [formData, setFormData] = useState<DemoPayloadSchema>({
+  const [formData, setFormData] = useState({
     companyName: "",
     industry: "Fashion",
     targetMarket: "",
     strategicGoal: "Increase Average Order Value",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const presets = [
+    {
+      name: "NordStyle",
+      industry: "Fashion",
+      market: "Germany",
+      goal: "Increase Average Order Value",
+      desc: "Premium Alpine Wear • Germany • Focus on cross-sells & bundles",
+      tag: "AOV Boost",
+      tagClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    },
+    {
+      name: "BarkBites",
+      industry: "Pet Care",
+      market: "United Kingdom",
+      goal: "Drive Repeat Purchase Rate",
+      desc: "Organic Dog Nutrition • UK • Auto-replenish subscriber flows",
+      tag: "Retention",
+      tagClass: "bg-purpleAccent/20 text-purpleBright border-purpleAccent/30",
+    },
+    {
+      name: "ElectroPulse",
+      industry: "Electronics",
+      market: "United States",
+      goal: "Cross-Sell High Margin Accessories",
+      desc: "Audiophile Workspaces • US • Custom DAC and accessory kits",
+      tag: "Margins",
+      tagClass: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    },
+  ];
 
-    // Formun boş gönderilmesini kesin olarak engelliyoruz
-    if (!formData.companyName.trim() || !formData.targetMarket.trim()) {
-      return;
-    }
-
-    onGenerate({
-      companyName: formData.companyName.trim(),
-      industry: formData.industry,
-      targetMarket: formData.targetMarket.trim(),
-      strategicGoal: formData.strategicGoal,
+  const handlePresetClick = (p: (typeof presets)[0]) => {
+    setFormData({
+      companyName: p.name,
+      industry: p.industry,
+      targetMarket: p.market,
+      strategicGoal: p.goal,
     });
   };
 
-  const applyPreset = (
-    company: string,
-    industry: "Fashion" | "Pet Care" | "Electronics",
-    market: string,
-    goal: string,
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFormData({
-      companyName: company,
-      industry,
-      targetMarket: market,
-      strategicGoal: goal,
+      ...formData,
+      [e.target.name]: e.target.value,
     });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onGenerate(formData);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 relative z-10">
-      {/* Preset Cards */}
-      <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-textMuted mb-3 text-center">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* FAST-TRACK SOLUTION PRESETS */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-textMuted text-center">
           Fast-Track Solution Presets
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div
-            onClick={() =>
-              applyPreset(
-                "NordStyle",
-                "Fashion",
-                "Germany",
-                "Increase Average Order Value",
-              )
-            }
-            className="group p-4 bg-cardBg/35 border border-borderPurple/30 rounded-xl hover:border-purpleAccent/60 cursor-pointer transition-all hover:-translate-y-0.5"
-          >
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-bold text-sm text-purpleBright">
-                NordStyle
-              </span>
-              <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
-                AOV Boost
-              </span>
+          {presets.map((p) => (
+            <div
+              key={p.name}
+              onClick={() => handlePresetClick(p)}
+              className="group p-4 bg-cardBg border border-borderPurple/30 rounded-xl hover:border-purpleAccent cursor-pointer transition-all hover:-translate-y-0.5"
+            >
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-sm text-purpleBright">
+                  {p.name}
+                </span>
+                <span
+                  className={`text-[9px] px-2 py-0.5 rounded border ${p.tagClass}`}
+                >
+                  {p.tag}
+                </span>
+              </div>
+              <p className="text-[11px] text-textMuted">{p.desc}</p>
             </div>
-            <p className="text-[11px] text-textMuted">
-              Premium Alpine Wear • Germany • Focus on cross-sells & bundles
-            </p>
-          </div>
-
-          <div
-            onClick={() =>
-              applyPreset(
-                "BarkBites",
-                "Pet Care",
-                "United Kingdom",
-                "Drive Repeat Purchase Rate",
-              )
-            }
-            className="group p-4 bg-cardBg/35 border border-borderPurple/30 rounded-xl hover:border-purpleAccent/60 cursor-pointer transition-all hover:-translate-y-0.5"
-          >
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-bold text-sm text-purpleBright">
-                BarkBites
-              </span>
-              <span className="text-[9px] bg-purpleAccent/20 text-purpleBright px-2 py-0.5 rounded border border-purpleAccent/30">
-                Retention
-              </span>
-            </div>
-            <p className="text-[11px] text-textMuted">
-              Organic Dog Nutrition • UK • Auto-replenish subscriber flows
-            </p>
-          </div>
-
-          <div
-            onClick={() =>
-              applyPreset(
-                "ElectroPulse",
-                "Electronics",
-                "United States",
-                "Cross-Sell High Margin Accessories",
-              )
-            }
-            className="group p-4 bg-cardBg/35 border border-borderPurple/30 rounded-xl hover:border-purpleAccent/60 cursor-pointer transition-all hover:-translate-y-0.5"
-          >
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-bold text-sm text-purpleBright">
-                ElectroPulse
-              </span>
-              <span className="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">
-                Margins
-              </span>
-            </div>
-            <p className="text-[11px] text-textMuted">
-              Audiophile Workspaces • US • Custom DAC and accessory kits
-            </p>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Main Strategic Form */}
-      <div className="bg-cardBg/30 border border-borderPurple/40 rounded-2xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purpleAccent to-purpleBright opacity-70"></div>
+      {/* TARGET INPUTS FORM */}
+      <div className="bg-cardBg border border-borderPurple/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-purpleAccent to-purpleBright"></div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* FIXED: THE EXACT SPECIFICATION LAYOUT MATCHING YOUR INPUT BLUEPRINT */}
+        <div className="flex items-center justify-between border-b border-borderPurple/30 pb-4 mb-5">
+          <h2 className="text-lg font-bold flex items-center gap-2.5 text-textLight">
+            <i className="fa-solid fa-sliders text-purpleBright"></i> Configure
+            Prospect Parameters
+          </h2>
+          <span className="text-[10px] font-mono bg-codeBg border border-borderPurple/60 px-2.5 py-1 rounded text-purpleBright">
+            POST /api/generate-demo
+          </span>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-2">
-                COMPANY / PROSPECT NAME
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1.5">
+                Company / Prospect Name
               </label>
               <input
                 type="text"
+                name="companyName"
                 required
                 value={formData.companyName}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
-                placeholder="e.g. NordStyle"
-                className="w-full bg-transparent border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight/80 placeholder:text-textMuted/30 focus:outline-none focus:border-purpleAccent/80 transition-all font-medium"
+                onChange={handleChange}
+                placeholder="e.g., NordStyle"
+                className="w-full bg-darkBg border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight focus:outline-none focus:border-purpleAccent transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-2">
-                COMMERCE INDUSTRY SECTOR
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1.5">
+                Commerce Industry Sector
               </label>
               <select
+                name="industry"
                 value={formData.industry}
-                onChange={(e) =>
-                  setFormData({ ...formData, industry: e.target.value as any })
-                }
-                className="w-full bg-transparent border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight/70 focus:outline-none focus:border-purpleAccent/80 transition-all font-medium text-left"
+                onChange={handleChange}
+                className="w-full bg-darkBg border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight focus:outline-none focus:border-purpleAccent transition-all"
               >
-                <option value="Fashion" className="bg-darkBg text-textLight">
-                  Fashion & Apparel
-                </option>
-                <option value="Pet Care" className="bg-darkBg text-textLight">
-                  Pet Care & Nutrition
-                </option>
-                <option
-                  value="Electronics"
-                  className="bg-darkBg text-textLight"
-                >
-                  Consumer Electronics
-                </option>
+                <option value="Fashion">Fashion & Apparel</option>
+                <option value="Pet Care">Pet Care & Nutrition</option>
+                <option value="Electronics">Consumer Electronics</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-2">
-                TARGET REGIONAL COUNTRY
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1.5">
+                Target Regional Country
               </label>
               <input
                 type="text"
+                name="targetMarket"
                 required
                 value={formData.targetMarket}
-                onChange={(e) =>
-                  setFormData({ ...formData, targetMarket: e.target.value })
-                }
-                placeholder="e.g. Germany"
-                className="w-full bg-transparent border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight/80 placeholder:text-textMuted/30 focus:outline-none focus:border-purpleAccent/80 transition-all font-medium"
+                onChange={handleChange}
+                placeholder="e.g., Germany"
+                className="w-full bg-darkBg border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight focus:outline-none focus:border-purpleAccent transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-2">
-                STRATEGIC SOLUTION GOAL
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1.5">
+                Strategic Solution Goal
               </label>
               <select
+                name="strategicGoal"
                 value={formData.strategicGoal}
-                onChange={(e) =>
-                  setFormData({ ...formData, strategicGoal: e.target.value })
-                }
-                className="w-full bg-transparent border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight/70 focus:outline-none focus:border-purpleAccent/80 transition-all font-medium text-left"
+                onChange={handleChange}
+                className="w-full bg-darkBg border border-borderPurple/50 rounded-lg px-3 py-2.5 text-xs text-textLight focus:outline-none focus:border-purpleAccent transition-all"
               >
-                <option
-                  value="Increase Average Order Value"
-                  className="bg-darkBg text-textLight"
-                >
+                <option value="Increase Average Order Value">
                   Increase Average Order Value / AOV
                 </option>
-                <option
-                  value="Drive Repeat Purchase Rate"
-                  className="bg-darkBg text-textLight"
-                >
+                <option value="Drive Repeat Purchase Rate">
                   Drive Repeat Subscriber Purchase Rates
                 </option>
-                <option
-                  value="Cross-Sell High Margin Accessories"
-                  className="bg-darkBg text-textLight"
-                >
+                <option value="Cross-Sell High Margin Accessories">
                   Cross-Sell Premium Margin Accessories
                 </option>
               </select>
             </div>
           </div>
 
-          <div className="bg-codeBg/40 border border-borderPurple/30 rounded-lg p-3 space-y-1.5">
+          {/* DYNAMIC PROMPT SCHEMA PAYLOAD BOX */}
+          <div className="bg-codeBg border border-borderPurple/50 rounded-lg p-3 space-y-1.5">
             <div className="flex justify-between items-center text-[10px]">
-              <span className="font-bold text-purpleBright">
-                <i className="fa-solid fa-code mr-1"></i> OpenAI Prompt Schema
+              <span className="font-bold text-purpleBright flex items-center gap-1">
+                <i className="fa-solid fa-code"></i> OpenAI Prompt Schema
                 Payload:
               </span>
               <span className="text-textMuted">application/json</span>
             </div>
-            <pre className="text-[10px] text-emerald-400/80 overflow-x-auto whitespace-pre-wrap leading-tight">
+            <pre className="text-[10px] text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap leading-tight">
               {JSON.stringify(
                 {
-                  companyName: formData.companyName.trim() || undefined,
+                  companyName: formData.companyName || "...",
                   industry: formData.industry,
-                  targetMarket: formData.targetMarket.trim() || undefined,
+                  targetMarket: formData.targetMarket || "...",
                   strategicGoal: formData.strategicGoal,
                 },
                 null,
@@ -253,11 +213,10 @@ export default function ProspectForm({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-purpleAccent to-purpleBright hover:opacity-95 disabled:opacity-50 text-darkBg font-bold text-xs py-3 px-4 rounded-xl transition-all shadow-lg shadow-purpleAccent/25 flex items-center justify-center gap-1.5 cursor-pointer relative z-20"
+            className="w-full bg-gradient-to-r from-purpleAccent to-purpleBright hover:opacity-95 text-darkBg font-bold text-xs py-3 px-4 rounded-xl transition-all shadow-lg shadow-purpleAccent/25 flex items-center justify-center gap-1.5"
           >
-            {isLoading
-              ? "Executing LLM Synthesis..."
-              : "Synthesize Demo Environment"}
+            <i className="fa-solid fa-wand-magic-sparkles"></i> Synthesize Demo
+            Environment
           </button>
         </form>
       </div>

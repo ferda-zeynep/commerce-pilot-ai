@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ProspectForm from "@/components/ProspectForm";
 import type { GeneratedSandboxData } from "@/types/demo";
+import { ShopifyProduct } from "@/types/shopify";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,13 +17,18 @@ export default function Home() {
     "NewCustomer" | "VIPCustomer" | "ChurnRisk"
   >("VIPCustomer");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  const [shopifyProducts, setShopifyProducts] = useState<ShopifyProduct[]>([]);
+  const [searchResults, setSearchResults] = useState<ShopifyProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [shopifyError, setShopifyError] = useState(false);
   const [prospectProfile, setProspectProfile] = useState({
     company: "",
     industry: "",
     goal: "",
     country: "",
   });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const steps = [
     "Connecting OpenAI GPT-4o completions API...",
@@ -30,6 +36,23 @@ export default function Home() {
     "Assembling PGVector cosine similarity catalogs...",
     "Writing omnichannel email, SMS, and widget copy...",
   ];
+
+  useEffect(() => {
+    async function fetchCatalog() {
+      try {
+        const res = await fetch("/api/shopify/products");
+        const json = await res.json();
+        if (json.success) {
+          setShopifyProducts(json.products);
+        } else {
+          setShopifyError(true);
+        }
+      } catch (err) {
+        setShopifyError(true);
+      }
+    }
+    fetchCatalog();
+  }, [generatedData]);
 
   useEffect(() => {
     if (isLoading) {
@@ -47,6 +70,13 @@ export default function Home() {
       setLoadingStep(0);
     }
   }, [isLoading]);
+
+  const triggerToast = (featureName: string) => {
+    setToastMessage(
+      `Presales Notification: ${featureName} environment matrix is active under local simulation restraints.`,
+    );
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const handleGenerate = async (formData: any) => {
     setIsLoading(true);
@@ -83,39 +113,38 @@ export default function Home() {
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!generatedData) return;
+    const queryClean = searchQuery.toLowerCase().trim();
+    if (!queryClean || shopifyProducts.length === 0) return;
 
-    const queryLower = searchQuery.toLowerCase().trim();
-    if (!queryLower) {
-      setSearchResults([]);
-      return;
-    }
+    setIsSearching(true);
+    setTimeout(() => {
+      const matched = shopifyProducts.filter((product) => {
+        return (
+          product.title.toLowerCase().includes(queryClean) ||
+          product.description.toLowerCase().includes(queryClean)
+        );
+      });
 
-    const allProducts = [
-      ...(generatedData.NewCustomer?.products || []),
-      ...(generatedData.VIPCustomer?.products || []),
-      ...(generatedData.ChurnRisk?.products || []),
-    ];
-
-    const matched = allProducts.filter((product, index, self) => {
-      const matchesQuery =
-        product.name?.toLowerCase().includes(queryLower) ||
-        product.description?.toLowerCase().includes(queryLower) ||
-        product.tag?.toLowerCase().includes(queryLower);
-
-      const isUnique = self.findIndex((p) => p.name === product.name) === index;
-
-      return matchesQuery && isUnique;
-    });
-
-    setSearchResults(matched.length > 0 ? matched : allProducts.slice(0, 2));
+      if (matched.length > 0) {
+        setSearchResults(matched);
+      } else {
+        setSearchResults(shopifyProducts.slice(0, 4));
+      }
+      setIsSearching(false);
+    }, 1200);
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8 relative z-10 min-h-screen font-sans">
+    <main className="max-w-7xl mx-auto px-4 py-8 relative z-10 min-h-screen font-sans text-textLight">
       <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purpleAccent opacity-[0.06] blur-[140px] pointer-events-none z-0"></div>
+
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-cardBg border border-purpleAccent/50 px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold text-purpleBright animate-bounce">
+          <i className="fa-solid fa-bolt mr-2"></i> {toastMessage}
+        </div>
+      )}
 
       <header className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 border-b border-borderPurple/40 pb-4">
         <div
@@ -126,7 +155,7 @@ export default function Home() {
             <span className="text-darkBg font-black text-xl">CP</span>
           </div>
           <div>
-            <span className="text-xl font-extrabold tracking-tight text-textLight">
+            <span className="text-xl font-extrabold tracking-tight">
               CommercePilot <span className="text-purpleAccent">AI</span>
             </span>
             <span className="block text-[10px] text-textMuted uppercase tracking-widest">
@@ -136,20 +165,32 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-6 text-xs font-semibold text-textMuted select-none">
-          <div className="flex items-center gap-4 border-r border-borderPurple/50 pr-6">
-            <div className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors">
+          <div className="flex items-center gap-5 border-r border-borderPurple/50 pr-6">
+            <div
+              onClick={() => triggerToast("Collections Hub")}
+              className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors"
+            >
               <i className="fa-solid fa-boxes-stacked text-base text-purpleAccent"></i>
               <span>Collections</span>
             </div>
-            <div className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors">
+            <div
+              onClick={() => triggerToast("Walkthrough Engine")}
+              className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors"
+            >
               <i className="fa-solid fa-scroll text-base"></i>
               <span>Demo Walkthrough</span>
             </div>
-            <div className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors">
+            <div
+              onClick={() => triggerToast("Campaign Assets Agent")}
+              className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors"
+            >
               <i className="fa-solid fa-rectangle-ad text-base"></i>
               <span>Campaign Assets</span>
             </div>
-            <div className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors">
+            <div
+              onClick={() => triggerToast("Workspace Settings")}
+              className="flex flex-col items-center gap-1 hover:text-purpleBright cursor-pointer transition-colors"
+            >
               <i className="fa-solid fa-sliders text-base"></i>
               <span>Settings</span>
             </div>
@@ -164,7 +205,7 @@ export default function Home() {
       {!generatedData && !isLoading && (
         <>
           <div className="text-center max-w-3xl mx-auto mb-10">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight text-textLight">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
               Generate High-Performance{" "}
               <span className="bg-gradient-to-r from-purpleBright to-purpleAccent bg-clip-text text-transparent">
                 Demo Environments
@@ -186,7 +227,7 @@ export default function Home() {
             <div className="absolute inset-0 rounded-full border-4 border-purpleAccent/20"></div>
             <div className="absolute inset-0 rounded-full border-4 border-t-purpleBright animate-spin"></div>
           </div>
-          <h2 className="text-xl font-bold text-textLight">
+          <h2 className="text-xl font-bold">
             Executing LLM Structured Synthesis...
           </h2>
           <div className="w-full text-left space-y-3 bg-darkBg/50 p-5 rounded-xl border border-borderPurple/30">
@@ -205,26 +246,33 @@ export default function Home() {
 
       {generatedData && !isLoading && (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-purpleAccent/10 to-transparent border border-borderPurple/40 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 bg-gradient-to-r from-purpleAccent/10 to-transparent border border-borderPurple/40 rounded-2xl p-6 relative overflow-hidden">
               <span className="text-[9px] font-bold uppercase tracking-wider bg-purpleAccent/25 border border-purpleAccent/30 text-purpleBright px-2 py-0.5 rounded">
                 {prospectProfile.industry.toUpperCase()} HUB
               </span>
-              <h2 className="text-2xl font-black text-textLight">
-                {prospectProfile.company} Live Demo Hub
+              <h2 className="text-3xl font-black mt-2">
+                Synthetic Sandbox Data
               </h2>
-              <p className="text-xs text-textMuted">
-                Successfully generated presales environment ready for
-                demonstration walkthrough sequences.
+              <p className="text-xs text-textMuted mt-1 max-w-xl">
+                Interacts resolution photo-realistic commercePilot AI net
+                workflows for presales enablement studio walkthrough arrays.
               </p>
             </div>
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => setGeneratedData(null)}
-                className="bg-darkBg hover:bg-cardBg border border-borderPurple/60 text-xs font-bold px-3.5 py-2 rounded-lg transition-all text-textLight"
-              >
-                Reset Sandbox
-              </button>
+            <div className="bg-cardBg border border-borderPurple/40 rounded-2xl p-5 flex flex-col justify-between">
+              <div className="flex justify-between items-center text-[10px] text-purpleBright font-bold">
+                <span>OpenAI Payload Overview</span>
+                <button
+                  onClick={() => setGeneratedData(null)}
+                  className="text-textMuted hover:text-textLight text-xs font-bold bg-darkBg px-2 py-0.5 rounded border border-borderPurple/30"
+                >
+                  Reset
+                </button>
+              </div>
+              <p className="text-[11px] text-textMuted italic mt-2">
+                "Successfully synchronized headless Shopify data maps with
+                OpenAI completions."
+              </p>
             </div>
           </div>
 
@@ -284,27 +332,73 @@ export default function Home() {
                   </button>
                 ))}
               </nav>
-              <div className="bg-cardBg/50 border border-borderPurple/30 rounded-xl p-4 text-xs space-y-3">
-                <span className="text-[10px] font-bold uppercase text-purpleBright flex items-center gap-1 border-b border-borderPurple/30 pb-1.5">
-                  <i className="fa-solid fa-address-card"></i> Prospect Profile
-                </span>
-                <div className="space-y-2 text-[11px] text-textMuted">
-                  <div>
-                    <span className="block text-[9px] uppercase font-bold tracking-wider text-textMuted/60">
-                      Synthesized Context:
+
+              {/* İLK FOTODAKİ BİREBİR BAŞLIK, İKON VE FORM PARAMETRELERİ PANELİ */}
+              <div className="bg-cardBg border border-borderPurple/50 rounded-xl p-4 text-xs space-y-4 shadow-xl">
+                <div className="flex items-center gap-2 border-b border-borderPurple/30 pb-2.5">
+                  <i className="fa-solid fa-gear text-sm text-purpleAccent"></i>
+                  <span className="text-xs font-bold tracking-tight text-textLight">
+                    Configure prospect parameters
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="bg-darkBg/60 p-2.5 rounded-lg border border-borderPurple/20">
+                    <span className="text-[10px] font-bold text-textMuted block mb-0.5 uppercase tracking-wider">
+                      Company Name
                     </span>
-                    <span className="text-textLight font-medium">
-                      Premium {prospectProfile.industry.toLowerCase()} brand
-                      targeting {prospectProfile.country} market.
+                    <span className="text-xs font-semibold text-textLight">
+                      {prospectProfile.company || "NordStyle"}
                     </span>
                   </div>
-                  <div>
-                    <span className="block text-[9px] uppercase font-bold tracking-wider text-textMuted/60">
-                      Goal Impact Target:
+
+                  <div className="bg-darkBg/60 p-2.5 rounded-lg border border-borderPurple/20 flex justify-between items-center">
+                    <div>
+                      <span className="text-[10px] font-bold text-textMuted block mb-0.5 uppercase tracking-wider">
+                        Industry
+                      </span>
+                      <span className="text-xs font-semibold text-textLight">
+                        {prospectProfile.industry || "Fashion"}
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-black uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-1.5 py-0.5 rounded tracking-wide">
+                      + VALUE COLORED
                     </span>
-                    <span className="text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
-                      <i className="fa-solid fa-arrow-trend-up"></i>{" "}
-                      {prospectProfile.goal}
+                  </div>
+
+                  <div className="bg-darkBg/60 p-2.5 rounded-lg border border-borderPurple/20">
+                    <span className="text-[10px] font-bold text-textMuted block mb-0.5 uppercase tracking-wider">
+                      Strategic Goal
+                    </span>
+                    <span className="text-xs font-semibold text-purpleBright">
+                      {prospectProfile.goal ||
+                        "Increase Average Order Value (AOV)"}
+                    </span>
+                  </div>
+
+                  <div className="bg-darkBg/60 p-2.5 rounded-lg border border-borderPurple/20">
+                    <span className="text-[10px] font-bold text-textMuted block mb-0.5 uppercase tracking-wider">
+                      Target Market
+                    </span>
+                    <span className="text-xs font-semibold text-textLight">
+                      {prospectProfile.country || "EU"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-borderPurple/25">
+                  <span className="text-[10px] font-bold text-purpleBright uppercase tracking-widest block mb-2">
+                    Visitor Personas
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="bg-purpleAccent/10 border border-purpleAccent/30 text-[9px] text-purpleBright font-bold px-2 py-0.5 rounded">
+                      Germans personas
+                    </span>
+                    <span className="bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400 font-bold px-2 py-0.5 rounded">
+                      Roman's personas
+                    </span>
+                    <span className="bg-rose-500/10 border border-rose-500/20 text-[9px] text-rose-400 font-bold px-2 py-0.5 rounded">
+                      Women's antenatags
                     </span>
                   </div>
                 </div>
@@ -315,13 +409,14 @@ export default function Home() {
               {activeTab === "storefront" && generatedData[currentPersona] && (
                 <div className="bg-cardBg border border-borderPurple/50 rounded-2xl overflow-hidden shadow-2xl">
                   <div className="bg-darkBg/60 px-5 py-3 border-b border-borderPurple/35 flex justify-between items-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-textMuted">
-                      Live Mock Storefront Preview
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded">
+                      <i className="fa-brands fa-shopify mr-1"></i> Powered by
+                      Shopify Storefront API
                     </span>
                     <select
                       value={currentPersona}
                       onChange={(e) => setCurrentPersona(e.target.value as any)}
-                      className="bg-cardBg text-[10px] font-bold text-textLight border border-borderPurple/40 rounded px-2 py-0.5 focus:outline-none"
+                      className="bg-darkBg text-[10px] font-bold text-textLight border border-borderPurple/40 rounded px-2 py-0.5 focus:outline-none"
                     >
                       <option value="NewCustomer">New Visitor Segment</option>
                       <option value="VIPCustomer">
@@ -332,18 +427,6 @@ export default function Home() {
                   </div>
 
                   <div className="p-6 space-y-6 bg-gradient-to-b from-darkBg to-cardBg">
-                    <div className="flex justify-between items-center pb-3 border-b border-borderPurple/20">
-                      <span className="text-base font-black tracking-tight text-textLight">
-                        {prospectProfile.company.toUpperCase()}
-                      </span>
-                      <div className="flex gap-4 text-xs text-purpleBright font-bold underline">
-                        <span>
-                          {generatedData[currentPersona].bannerHighlight ||
-                            "Core Catalog"}
-                        </span>
-                      </div>
-                    </div>
-
                     <div
                       className={`rounded-xl p-5 border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r ${currentPersona === "VIPCustomer" ? "border-purpleAccent/50 from-purpleAccent/20 to-purpleBright/5" : currentPersona === "NewCustomer" ? "border-emerald-500/50 from-emerald-500/20 to-emerald-400/5" : "border-blue-500/50 from-blue-500/20 to-blue-400/5"}`}
                     >
@@ -366,47 +449,46 @@ export default function Home() {
                     </div>
 
                     <div className="space-y-3">
-                      <div className="flex justify-between items-end">
-                        <h4 className="text-sm font-bold text-textLight">
-                          Curated Recommendations
-                        </h4>
-                        <span className="text-[10px] text-purpleBright font-bold">
-                          Loomi personalization engine active
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {generatedData[currentPersona].products?.map(
-                          (p, idx) => (
+                      <h4 className="text-sm font-bold text-textLight">
+                        Live Shopify Storefront Catalog
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        {(shopifyProducts.length > 0
+                          ? shopifyProducts
+                          : Array(5).fill(null)
+                        )
+                          .slice(0, 5)
+                          .map((product, idx) => (
                             <div
-                              key={idx}
-                              className="bg-darkBg border border-borderPurple/30 rounded-xl overflow-hidden group hover:border-purpleAccent/50 transition-all"
+                              key={product?.id || idx}
+                              className="bg-darkBg border border-borderPurple/30 rounded-xl overflow-hidden group hover:border-purpleAccent/50 transition-all text-center p-2 flex flex-col justify-between"
                             >
-                              <div className="h-36 relative overflow-hidden bg-cardBg/40 flex items-center justify-center">
-                                <img
-                                  className="w-full h-full object-cover"
-                                  alt={p.name}
-                                  src={p.img}
-                                />
-                                <span className="absolute top-2.5 left-2.5 text-[8px] bg-purpleAccent text-darkBg font-bold px-1.5 py-0.5 rounded uppercase">
-                                  {p.tag}
+                              <div className="h-28 relative overflow-hidden bg-cardBg/40 flex items-center justify-center rounded-lg">
+                                {product?.featuredImage?.url ? (
+                                  <img
+                                    className="w-full h-full object-cover"
+                                    alt={product.title}
+                                    src={product.featuredImage.url}
+                                  />
+                                ) : (
+                                  <div className="text-[10px] text-textMuted">
+                                    Product Asset
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-2 space-y-1 text-left">
+                                <h5 className="font-bold text-[11px] text-textLight truncate">
+                                  {product?.title || "Premium Apparel"}
+                                </h5>
+                                <span className="font-black text-purpleBright block text-xs">
+                                  {product?.priceRange.minVariantPrice.amount ||
+                                    "95.00"}{" "}
+                                  {product?.priceRange.minVariantPrice
+                                    .currencyCode || "USD"}
                                 </span>
                               </div>
-                              <div className="p-3 space-y-1.5">
-                                <h5 className="font-bold text-xs text-textLight truncate">
-                                  {p.name}
-                                </h5>
-                                <div className="flex justify-between items-center text-[11px]">
-                                  <span className="font-black text-purpleBright">
-                                    {p.price}
-                                  </span>
-                                  <span className="text-[9px] text-emerald-400 font-semibold">
-                                    High-Affinity
-                                  </span>
-                                </div>
-                              </div>
                             </div>
-                          ),
-                        )}
+                          ))}
                       </div>
                     </div>
                   </div>
@@ -414,90 +496,83 @@ export default function Home() {
               )}
 
               {activeTab === "search" && (
-                <div className="bg-cardBg border border-borderPurple/50 rounded-2xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-3 h-[420px]">
-                  <div className="md:col-span-1 bg-darkBg/40 border-r border-borderPurple/35 p-4 flex flex-col justify-between text-xs text-textMuted leading-relaxed">
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-extrabold text-purpleBright uppercase tracking-wider block">
-                        Supabase PGVector Layer
-                      </span>
-                      <p>
-                        Rather than basic text queries, Bloomreach uses
-                        multi-dimensional catalog embeddings to parse intent
-                        maps.
-                      </p>
-                    </div>
-                    <div className="bg-purpleAccent/5 border border-borderPurple/40 p-2.5 rounded-lg text-[10px]">
-                      <span className="font-bold text-textLight block mb-1">
-                        Try Searching For:
-                      </span>
-                      <code className="text-purpleBright">jacket</code>,{" "}
-                      <code className="text-purpleBright">hoodie</code>,{" "}
-                      <code className="text-purpleBright">hub</code>,{" "}
-                      <code className="text-purpleBright">sound</code> or{" "}
-                      <code className="text-purpleBright">food</code>
-                    </div>
+                <div className="bg-cardBg border border-borderPurple/50 rounded-2xl p-6 shadow-2xl space-y-6 backdrop-blur-md">
+                  <div className="border-b border-borderPurple/30 pb-3">
+                    <span className="text-[10px] font-extrabold text-purpleBright uppercase tracking-wider block">
+                      LLM Semantic Intent Matcher
+                    </span>
+                    <h3 className="text-xl font-black text-textLight mt-1">
+                      AI Discovery Recommendation Search
+                    </h3>
+                    <p className="text-xs text-textMuted mt-1">
+                      Queries the live Shopify catalog dataset variables using
+                      OpenAI synthesis weights.
+                    </p>
                   </div>
-                  <div className="md:col-span-2 flex flex-col h-full justify-between bg-darkBg/10">
-                    <div className="flex-grow p-4 overflow-y-auto space-y-3">
-                      <div className="text-xs text-textMuted bg-cardBg border border-borderPurple/45 rounded-xl p-3">
-                        <strong>Loomi Search Assistant:</strong> Hello! Query
-                        custom descriptive keywords. I will filter the catalog
-                        dynamically via structural vector triggers.
-                      </div>
-                      {searchResults.length > 0 && (
-                        <div className="space-y-2">
-                          <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block px-1">
-                            ✓ Vector Similarity Matches Found:
-                          </span>
-                          <div className="grid grid-cols-1 gap-2.5">
-                            {searchResults.map((p, idx) => (
-                              <div
-                                key={idx}
-                                className="bg-darkBg/80 border border-borderPurple/50 rounded-xl p-3 flex items-center gap-4 hover:border-purpleAccent/40 transition-all"
-                              >
-                                <img
-                                  src={p.img}
-                                  alt={p.name}
-                                  className="w-12 h-12 rounded-lg object-cover border border-borderPurple/30 shrink-0"
-                                />
-                                <div className="flex-grow min-w-0">
-                                  <div className="flex justify-between items-center gap-2">
-                                    <h4 className="font-bold text-xs text-textLight truncate">
-                                      {p.name}
-                                    </h4>
-                                    <span className="text-xs font-black text-purpleBright shrink-0">
-                                      {p.price}
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-textMuted truncate mt-0.5">
-                                    {p.description ||
-                                      "Synthesized premium item mapping."}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <form
-                      onSubmit={handleSearchSubmit}
-                      className="p-2 border-t border-borderPurple/30 bg-cardBg flex gap-2"
+
+                  <form
+                    onSubmit={handleSearchSubmit}
+                    className="bg-darkBg/60 p-4 border border-borderPurple/50 rounded-xl flex flex-col sm:flex-row gap-3"
+                  >
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Type dynamic descriptive consumer intent models (e.g., lightweight active rain gear, pro dac cables)..."
+                      className="flex-1 bg-cardBg border border-borderPurple/60 rounded-lg px-4 py-3.5 text-xs text-textLight focus:outline-none focus:border-purpleAccent"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-purpleAccent hover:bg-purpleBright text-darkBg px-6 py-3.5 rounded-lg font-black text-xs transition-all uppercase tracking-wider shadow-lg shadow-purpleAccent/25 flex items-center justify-center gap-1.5 shrink-0"
                     >
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Ask search assistant (e.g. winter jacket, sound setup)..."
-                        className="flex-grow bg-darkBg border border-borderPurple/50 rounded-lg px-3 py-2 text-xs text-textLight focus:outline-none focus:border-purpleAccent"
-                      />
-                      <button
-                        type="submit"
-                        className="bg-purpleAccent hover:bg-purpleBright text-darkBg px-5 rounded-lg font-bold text-xs transition-colors"
-                      >
-                        Run
-                      </button>
-                    </form>
+                      <i className="fa-solid fa-wand-magic-sparkles"></i> Run AI
+                      Query Sequence
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {isSearching && (
+                      <div className="text-xs text-textMuted animate-pulse bg-darkBg/40 p-4 rounded-xl border border-borderPurple/30">
+                        Running neural network evaluation filters over headless
+                        assets...
+                      </div>
+                    )}
+
+                    {searchResults.length > 0 && !isSearching && (
+                      <div className="space-y-3">
+                        <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block px-1">
+                          ✓ Ranked Semantic Shopify Catalog Matches:
+                        </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {searchResults.map((p) => (
+                            <div
+                              key={p.id}
+                              className="bg-darkBg/80 border border-borderPurple/50 rounded-xl p-3 flex items-center gap-4"
+                            >
+                              <img
+                                src={p.featuredImage?.url}
+                                alt={p.title}
+                                className="w-12 h-12 rounded-lg object-cover shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex justify-between items-center">
+                                  <h4 className="font-bold text-xs text-textLight truncate">
+                                    {p.title}
+                                  </h4>
+                                  <span className="text-xs font-black text-purpleBright shrink-0">
+                                    {p.priceRange.minVariantPrice.amount}{" "}
+                                    {p.priceRange.minVariantPrice.currencyCode}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-textMuted truncate mt-0.5">
+                                  {p.description || "Live headless item match."}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

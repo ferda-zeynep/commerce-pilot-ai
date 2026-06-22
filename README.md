@@ -118,11 +118,9 @@ http://localhost:3000
 
 ## Future Improvements
 
-- Shopify Storefront API Integration
 - Vector Search with pgvector
 - Agentic Campaign Generation
 - Multi-Industry Templates
-- Demo Sharing Links
 - Team Collaboration Features
 
 ---
@@ -130,3 +128,12 @@ http://localhost:3000
 ## Project Goal
 
 The goal of CommercePilot AI is to demonstrate how AI-powered personalization, commerce experiences, and presales enablement tools can be combined into a single workflow that helps Solution Consultants create compelling customer demonstrations in minutes.
+
+## Shopify Integration & Semantic Discovery Flow
+
+CommercePilot AI integrates seamlessly with the headless **Shopify Storefront GraphQL API** to ingest dynamic live catalog schemas instead of static mock variables.
+
+### Architecture Topology
+
+1. **Dynamic Catalog Retrieval**: A standalone service layer (`lib/shopify.ts`) triggers synchronous requests securely matching `SHOPIFY_STORE_DOMAIN` and token criteria.
+2. **LLM Semantic Recommendation Loop**: When a customer query is dispatched in the _AI Discovery Search_ console, the engine aggregates the extracted live Shopify product variants and pipes them into an OpenAI-powered orchestration pipeline, filtering results based on product metadata relevance matrices.
