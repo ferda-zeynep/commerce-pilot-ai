@@ -333,7 +333,6 @@ export default function Home() {
                 ))}
               </nav>
 
-              {/* İLK FOTODAKİ BİREBİR BAŞLIK, İKON VE FORM PARAMETRELERİ PANELİ */}
               <div className="bg-cardBg border border-borderPurple/50 rounded-xl p-4 text-xs space-y-4 shadow-xl">
                 <div className="flex items-center gap-2 border-b border-borderPurple/30 pb-2.5">
                   <i className="fa-solid fa-gear text-sm text-purpleAccent"></i>
@@ -362,7 +361,7 @@ export default function Home() {
                       </span>
                     </div>
                     <span className="text-[9px] font-black uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-1.5 py-0.5 rounded tracking-wide">
-                      + VALUE COLORED
+                      Enterprise
                     </span>
                   </div>
 
@@ -388,17 +387,17 @@ export default function Home() {
 
                 <div className="pt-2 border-t border-borderPurple/25">
                   <span className="text-[10px] font-bold text-purpleBright uppercase tracking-widest block mb-2">
-                    Visitor Personas
+                    Target Personas
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     <span className="bg-purpleAccent/10 border border-purpleAccent/30 text-[9px] text-purpleBright font-bold px-2 py-0.5 rounded">
-                      Germans personas
+                      Regional Audiences
                     </span>
                     <span className="bg-amber-500/10 border border-amber-500/20 text-[9px] text-amber-400 font-bold px-2 py-0.5 rounded">
-                      Roman's personas
+                      Loyalty Tiers
                     </span>
                     <span className="bg-rose-500/10 border border-rose-500/20 text-[9px] text-rose-400 font-bold px-2 py-0.5 rounded">
-                      Women's antenatags
+                      High-Intent Segments
                     </span>
                   </div>
                 </div>

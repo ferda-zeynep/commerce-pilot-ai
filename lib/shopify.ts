@@ -88,7 +88,7 @@ export async function getShopifyProducts(): Promise<ShopifyProduct[]> {
     const json = (await response.json()) as ShopifyProductsResponse;
     return json.data.products.edges.map((edge) => edge.node);
   } catch (error) {
-    console.error("Shopify fetch failed:", error);
+    console.error("Shopify storefront API connection lifecycle failed:", error);
     return [];
   }
 }
