@@ -1,5 +1,7 @@
 # CommercePilot AI
 
+<img width="1902" height="820" alt="Image" src="https://github.com/user-attachments/assets/68dc1162-3de2-4d0e-813c-6a36f01f116c" />
+
 AI-powered presales enablement platform for generating personalized commerce demo environments.
 
 CommercePilot AI helps Solution Consultants quickly generate personalized commerce demo experiences for prospective customers. By providing a company name, industry, target market, and business objective, users can instantly create a tailored demo sandbox featuring customer segmentation, storefront personalization, AI-powered product discovery, marketing campaigns, and executive demo scripts.
